@@ -1138,161 +1138,6 @@ function drawAddressAndMeta(
       metaY
     ) + 18;
 }
-// function drawAddressAndMeta(
-//   doc,
-//   order,
-//   type
-// ) {
-//   const isInvoice =
-//     type === 'invoice';
-
-//   const billing =
-//     order.billing || {};
-
-//   const shipping =
-//     order.shipping ||
-//     billing;
-
-//   const address =
-//     isInvoice
-//       ? billing
-//       : shipping;
-
-//   const startY = doc.y;
-
-//   const lines =
-//     addressLines(address);
-
-//   doc
-//     .font('Helvetica')
-//     .fontSize(9.5)
-//     .fillColor('#111111');
-
-//   let addressY =
-//     startY;
-
-//   for (const line of lines) {
-//     doc.text(
-//       String(line),
-//       44,
-//       addressY,
-//       {
-//         width: 240,
-//       }
-//     );
-
-//     addressY += 16;
-//   }
-
-//   const metaX = 320;
-
-//   let metaY =
-//     startY;
-
-//   if (
-//     isInvoice &&
-//     order.institution_name
-//   ) {
-//     doc
-//       .font('Helvetica-Bold')
-//       .fontSize(9.5)
-//       .text(
-//         String(
-//           order.institution_name
-//         ).toUpperCase(),
-//         metaX,
-//         metaY,
-//         {
-//           width: 230,
-//         }
-//       );
-
-//     metaY += 19;
-//   }
-
-//   const metaRows =
-//     isInvoice
-//       ? [
-//           [
-//             'Invoice Number',
-//             order.invoice_number ||
-//               '—',
-//           ],
-//           [
-//             'Invoice Date',
-//             pdfDate(
-//               order.invoice_date
-//             ),
-//           ],
-//           [
-//             'Order Number',
-//             order.id,
-//           ],
-//           [
-//             'Order Date',
-//             pdfDate(
-//               order.date_created_gmt
-//             ),
-//           ],
-//           [
-//             'Payment Method',
-//             order.payment_method_title ||
-//               order.payment_method ||
-//               '—',
-//           ],
-//         ]
-//       : [
-//           [
-//             'Order Number',
-//             order.id,
-//           ],
-//           [
-//             'Order Date',
-//             pdfDate(
-//               order.date_created_gmt
-//             ),
-//           ],
-//           [
-//             'Shipping Method',
-//             order.shipping_label ||
-//               'Flat rate',
-//           ],
-//         ];
-
-//   for (
-//     const [label, value]
-//     of metaRows
-//   ) {
-//     doc
-//       .font('Helvetica-Bold')
-//       .fontSize(9)
-//       .text(
-//         `${label}:`,
-//         metaX,
-//         metaY,
-//         {
-//           width: 95,
-//           continued: true,
-//         }
-//       )
-//       .font('Helvetica')
-//       .text(
-//         ` ${value}`,
-//         {
-//           width: 135,
-//         }
-//       );
-
-//     metaY += 17;
-//   }
-
-//   doc.y =
-//     Math.max(
-//       addressY,
-//       metaY
-//     ) + 20;
-// }
-
 function drawItemsHeader(
   doc,
   type
@@ -1307,24 +1152,23 @@ function drawItemsHeader(
 
   const y = doc.y;
 
-  doc
-    .rect(
-      44,
-      y,
-      507,
-      28
-    )
-    .fill('#000000');
+  /* =====================================================
+     HEADER TEXT
+     - No black background
+     - Black text
+  ===================================================== */
 
   doc
-    .fillColor('#ffffff')
+    .fillColor('#111111')
     .font('Helvetica-Bold')
     .fontSize(9);
+
+  /* PRODUCT */
 
   doc.text(
     'Product',
     55,
-    y + 9,
+    y + 7,
     {
       width:
         isInvoice
@@ -1332,59 +1176,64 @@ function drawItemsHeader(
           : 390,
     }
   );
-doc.text(
-  'Quantity',
-  isInvoice
-    ? 365
-    : 445,
-  y + 9,
-  {
-    width: 60,
-    align: 'right',
-  }
-);
 
-if (isInvoice) {
+  /* QUANTITY */
+
   doc.text(
-    'Price',
-    455,
-    y + 9,
+    'Quantity',
+    isInvoice
+      ? 365
+      : 445,
+    y + 7,
     {
-      width: 85,
+      width: 60,
       align: 'right',
     }
   );
-}
-  // doc.text(
-  //   'Quantity',
-  //   isInvoice
-  //     ? 350
-  //     : 445,
-  //   y + 9,
-  //   {
-  //     width: 70,
-  //     align: 'right',
-  //   }
-  // );
 
-  // if (isInvoice) {
-  //   doc.text(
-  //     'Price',
-  //     445,
-  //     y + 9,
-  //     {
-  //       width: 95,
-  //       align: 'right',
-  //     }
-  //   );
-  // }
+  /* PRICE - INVOICE ONLY */
+
+  if (isInvoice) {
+    doc.text(
+      'Price',
+      455,
+      y + 7,
+      {
+        width: 85,
+        align: 'right',
+      }
+    );
+  }
+
+  /* =====================================================
+     UNDERLINE BELOW TABLE HEADER
+  ===================================================== */
+
+  doc
+    .moveTo(
+      44,
+      y + 25
+    )
+    .lineTo(
+      551,
+      y + 25
+    )
+    .lineWidth(0.8)
+    .strokeColor('#111111')
+    .stroke();
+
+  /* Reset normal color */
 
   doc
     .fillColor('#111111');
 
+  /* Space before first product */
+
   doc.y =
     y + 35;
 }
+
+
 
 function drawOrderItems(
   doc,
@@ -1458,7 +1307,7 @@ function drawOrderItems(
 
     if (item.size) {
       doc
-        .font('Helvetica')
+        .font('Helvetica-Bold')
         .fontSize(8)
         .fillColor('#444444')
         .text(
@@ -1492,7 +1341,7 @@ function drawOrderItems(
       detailParts.length
     ) {
       doc
-        .font('Helvetica')
+        .font('Helvetica-Bold')
         .fontSize(8)
         .fillColor('#444444')
         .text(
@@ -2869,7 +2718,8 @@ module.exports = {
 // const { unserializePhp } = require('../utils/php');
 // const { httpError } = require('../utils/httpError');
 // const orderService = require('./orderService');
-// const { htmlToPdfBuffer, toBuffer } = require('./pdfService');
+// const PDFDocument = require('pdfkit');
+// // const { htmlToPdfBuffer, toBuffer } = require('./pdfService');
 // const { sendMail } = require('./mailService');
 // const env = require('../config/env');
 // const fs = require('fs');
@@ -3058,7 +2908,7 @@ module.exports = {
 
 //   const logoPath = path.join(
 //     __dirname,
-//     '../../../frontend/public/logo.jpg'
+//     '../../assets/logo.jpg'
 //   );
 
 //   if (!fs.existsSync(logoPath)) {
@@ -3079,26 +2929,7 @@ module.exports = {
 
 //   return logoDataUriCache;
 // }
-// // function getLogoDataUri() {
-// //   if (logoDataUriCache) return logoDataUriCache;
 
-// //   const candidates = [
-// //     path.join(__dirname, '../../assets/brassleaf-logo.png'),
-// //     path.join(__dirname, '../../assets/brassleaf-logo.svg'),
-// //     path.join(__dirname, '../../../../brassleaf-globaledge-userside/public/logo.svg'),
-// //   ];
-
-// //   for (const file of candidates) {
-// //     if (!fs.existsSync(file)) continue;
-// //     const ext = path.extname(file).slice(1).toLowerCase();
-// //     const mime = ext === 'svg' ? 'image/svg+xml' : 'image/png';
-// //     logoDataUriCache = `data:${mime};base64,${fs.readFileSync(file).toString('base64')}`;
-// //     return logoDataUriCache;
-// //   }
-
-// //   logoDataUriCache = '';
-// //   return logoDataUriCache;
-// // }
 
 // function documentStyles() {
 //   return `
@@ -3509,7 +3340,11 @@ module.exports = {
 //     subtotal,
 //     shipping_cost: shippingCost,
 //     shipping_label: shippingLabel,
-//     invoice_number: metaMap._wcpdf_invoice_number || order.invoice_number || order.id,
+//     invoice_number:
+//   metaMap._wcpdf_invoice_number ||
+//   order.invoice_number ||
+//   null,
+//     // invoice_number: metaMap._wcpdf_invoice_number || order.invoice_number || order.id,
 //     invoice_date: metaMap._wcpdf_invoice_date_formatted || order.invoice_date || order.date_created_gmt,
 //     packing_slip_number: order.id,
 //     customer_name: order.billing
@@ -3517,6 +3352,1256 @@ module.exports = {
 //       : null,
 //     institution_name: await resolveInstitutionName(order),
 //   };
+// }
+
+// function moneyText(amount) {
+//   const n = Number(amount || 0);
+
+//   return `Rs. ${n.toLocaleString(
+//     'en-IN',
+//     {
+//       minimumFractionDigits: 2,
+//       maximumFractionDigits: 2,
+//     }
+//   )}`;
+// }
+
+// function pdfDate(value) {
+//   if (!value) {
+//     return '—';
+//   }
+
+//   const d = new Date(value);
+
+//   if (Number.isNaN(d.getTime())) {
+//     return String(value);
+//   }
+
+//   return d.toLocaleDateString(
+//     'en-IN',
+//     {
+//       day: 'numeric',
+//       month: 'long',
+//       year: 'numeric',
+//       timeZone: 'Asia/Kolkata',
+//     }
+//   );
+// }
+
+// // function getPdfLogoPath() {
+// //   const logoPath = path.join(
+// //     __dirname,
+// //     '../../../frontend/public/logo.jpg'
+// //   );
+
+// //   return fs.existsSync(logoPath)
+// //     ? logoPath
+// //     : null;
+// // }
+// function getPdfLogoPath() {
+//   const logoPath = path.join(
+//     __dirname,
+//     '../../assets/logo.jpg'
+//   );
+
+//   if (!fs.existsSync(logoPath)) {
+//     console.error(
+//       'PDF logo not found:',
+//       logoPath
+//     );
+
+//     return null;
+//   }
+
+//   return logoPath;
+// }
+
+// function createPdfDocument() {
+//   return new PDFDocument({
+//     size: 'A4',
+//     margins: {
+//       top: 36,
+//       bottom: 40,
+//       left: 44,
+//       right: 44,
+//     },
+//     bufferPages: true,
+//   });
+// }
+
+// function collectPdfBuffer(doc) {
+//   return new Promise(
+//     (resolve, reject) => {
+//       const chunks = [];
+
+//       doc.on(
+//         'data',
+//         (chunk) => {
+//           chunks.push(chunk);
+//         }
+//       );
+
+//       doc.on(
+//         'end',
+//         () => {
+//           resolve(
+//             Buffer.concat(chunks)
+//           );
+//         }
+//       );
+
+//       doc.on(
+//         'error',
+//         reject
+//       );
+//     }
+//   );
+// }
+
+// function ensurePdfSpace(
+//   doc,
+//   requiredHeight = 100
+// ) {
+//   const bottom =
+//     doc.page.height -
+//     doc.page.margins.bottom;
+
+//   if (
+//     doc.y + requiredHeight >
+//     bottom
+//   ) {
+//     doc.addPage();
+//   }
+// }
+
+// function drawPdfHeader(
+//   doc,
+//   order,
+//   type
+// ) {
+//   const isInvoice =
+//     type === 'invoice';
+
+//   const logoPath =
+//     getPdfLogoPath();
+
+//   const startY =
+//     doc.page.margins.top;
+
+//   if (logoPath) {
+//     try {
+//       // doc.image(
+//       //   logoPath,
+//       //   doc.page.margins.left,
+//       //   startY,
+//       //   {
+//       //     fit: [145, 72],
+//       //     align: 'left',
+//       //   }
+//       // );
+//       doc.image(
+//   logoPath,
+//   doc.page.margins.left,
+//   startY,
+//   {
+//     fit: [125, 60],
+//     align: 'left',
+//     valign: 'top',
+//   }
+// );
+//     } catch (error) {
+//       console.error(
+//         'Unable to add PDF logo:',
+//         error.message
+//       );
+//     }
+//   } else {
+//     doc
+//       .font('Helvetica-Bold')
+//       .fontSize(16)
+//       .text(
+//         SHOP.name,
+//         doc.page.margins.left,
+//         startY
+//       );
+//   }
+
+//   // const shopX = 310;
+//   const shopX = 300;
+// const shopWidth = 250;
+
+// doc
+//   .font('Helvetica-Bold')
+//   .fontSize(10)
+//   .fillColor('#111111')
+//   .text(
+//     SHOP.name,
+//     shopX,
+//     startY,
+//     {
+//       width: shopWidth,
+//     }
+//   );
+
+// doc
+//   .font('Helvetica')
+//   .fontSize(8.5)
+//   .text(
+//     SHOP.address,
+//     shopX,
+//     startY + 18,
+//     {
+//       width: shopWidth,
+//       lineGap: 2,
+//     }
+//   );
+
+// // GSTIN already address lo unte malli print cheyyakudadhu
+// if (
+//   SHOP.gstin &&
+//   !String(SHOP.address || '')
+//     .toUpperCase()
+//     .includes(
+//       String(SHOP.gstin).toUpperCase()
+//     )
+// ) {
+//   doc.text(
+//     `GSTIN: ${SHOP.gstin}`,
+//     shopX,
+//     startY + 62,
+//     {
+//       width: shopWidth,
+//     }
+//   );
+// }
+
+// doc.y = startY + 110;
+//   // doc
+//   //   .font('Helvetica-Bold')
+//   //   .fontSize(10)
+//   //   .fillColor('#111111')
+//   //   .text(
+//   //     SHOP.name,
+//   //     shopX,
+//   //     startY,
+//   //     {
+//   //       width: 240,
+//   //     }
+//   //   );
+
+//   // doc
+//   //   .font('Helvetica')
+//   //   .fontSize(8.5)
+//   //   .text(
+//   //     SHOP.address,
+//   //     shopX,
+//   //     startY + 18,
+//   //     {
+//   //       width: 240,
+//   //       lineGap: 2,
+//   //     }
+//   //   );
+
+//   // doc.text(
+//   //   `GSTIN: ${SHOP.gstin}`,
+//   //   shopX,
+//   //   startY + 58,
+//   //   {
+//   //     width: 240,
+//   //   }
+//   // );
+
+//   // doc.y =
+//   //   startY + 105;
+
+//   // doc
+//   //   .font('Helvetica-Bold')
+//   //   .fontSize(20)
+//   //   .fillColor('#111111')
+//   //   .text(
+//   //     isInvoice
+//   //       ? 'INVOICE'
+//   //       : 'PACKING SLIP'
+//   //   );
+//   doc
+//   .font('Helvetica-Bold')
+//   .fontSize(20)
+//   .fillColor('#111111')
+//   .text(
+//     isInvoice
+//       ? 'INVOICE'
+//       : 'PACKING SLIP',
+//     44,
+//     doc.y,
+//     {
+//       width: 250,
+//       align: 'left',
+//     }
+//   );
+
+//   doc.moveDown(1);
+// }
+
+// function drawAddressAndMeta(
+//   doc,
+//   order,
+//   type
+// ) {
+//   const isInvoice =
+//     type === 'invoice';
+
+//   const billing =
+//     order.billing || {};
+
+//   const shipping =
+//     order.shipping || billing;
+
+//   const address =
+//     isInvoice
+//       ? billing
+//       : shipping;
+
+//   const startY = doc.y;
+
+//   /*
+//    * LEFT SIDE - CUSTOMER ADDRESS
+//    */
+//   const addressX = 44;
+//   const addressWidth = 245;
+
+//   const lines =
+//     addressLines(address);
+
+//   doc
+//     .font('Helvetica')
+//     .fontSize(9.5)
+//     .fillColor('#111111');
+
+//   let addressY = startY;
+
+//   for (const line of lines) {
+//     doc.text(
+//       String(line),
+//       addressX,
+//       addressY,
+//       {
+//         width: addressWidth,
+//         lineGap: 2,
+//       }
+//     );
+
+//     addressY =
+//       doc.y + 4;
+//   }
+
+//   /*
+//    * RIGHT SIDE - ORDER / INVOICE DETAILS
+//    */
+//   const metaX = 310;
+//   const labelWidth = 105;
+//   const valueX = 420;
+//   const valueWidth = 130;
+
+//   let metaY = startY;
+
+//   if (
+//     isInvoice &&
+//     order.institution_name
+//   ) {
+//     doc
+//       .font('Helvetica-Bold')
+//       .fontSize(9.5)
+//       .fillColor('#111111')
+//       .text(
+//         String(
+//           order.institution_name
+//         ).toUpperCase(),
+//         metaX,
+//         metaY,
+//         {
+//           width: 240,
+//         }
+//       );
+
+//     metaY =
+//       doc.y + 8;
+//   }
+
+//   const metaRows =
+//     isInvoice
+//       ? [
+//           [
+//             'Invoice Number',
+//             order.invoice_number || '—',
+//           ],
+//           [
+//             'Invoice Date',
+//             pdfDate(
+//               order.invoice_date
+//             ),
+//           ],
+//           [
+//             'Order Number',
+//             order.id || '—',
+//           ],
+//           [
+//             'Order Date',
+//             pdfDate(
+//               order.date_created_gmt
+//             ),
+//           ],
+//           [
+//             'Payment Method',
+//             order.payment_method_title ||
+//               order.payment_method ||
+//               '—',
+//           ],
+//         ]
+//       : [
+//           [
+//             'Order Number',
+//             order.id || '—',
+//           ],
+//           [
+//             'Order Date',
+//             pdfDate(
+//               order.date_created_gmt
+//             ),
+//           ],
+//           [
+//             'Shipping Method',
+//             order.shipping_label ||
+//               'Flat rate',
+//           ],
+//         ];
+
+//   for (
+//     const [label, value]
+//     of metaRows
+//   ) {
+//     doc
+//       .font('Helvetica-Bold')
+//       .fontSize(9);
+
+//     const labelHeight =
+//       doc.heightOfString(
+//         `${label}:`,
+//         {
+//           width: labelWidth,
+//         }
+//       );
+
+//     doc
+//       .font('Helvetica')
+//       .fontSize(9);
+
+//     const valueHeight =
+//       doc.heightOfString(
+//         String(value ?? '—'),
+//         {
+//           width: valueWidth,
+//         }
+//       );
+
+//     const rowHeight =
+//       Math.max(
+//         labelHeight,
+//         valueHeight,
+//         13
+//       );
+
+//     doc
+//       .font('Helvetica-Bold')
+//       .fontSize(9)
+//       .fillColor('#111111')
+//       .text(
+//         `${label}:`,
+//         metaX,
+//         metaY,
+//         {
+//           width: labelWidth,
+//         }
+//       );
+
+//     doc
+//       .font('Helvetica')
+//       .fontSize(9)
+//       .fillColor('#111111')
+//       .text(
+//         String(value ?? '—'),
+//         valueX,
+//         metaY,
+//         {
+//           width: valueWidth,
+//           lineGap: 1,
+//         }
+//       );
+
+//     metaY +=
+//       rowHeight + 7;
+//   }
+
+//   /*
+//    * Product table starts only
+//    * after both columns finish.
+//    */
+//   doc.y =
+//     Math.max(
+//       addressY,
+//       metaY
+//     ) + 18;
+// }
+// // function drawAddressAndMeta(
+// //   doc,
+// //   order,
+// //   type
+// // ) {
+// //   const isInvoice =
+// //     type === 'invoice';
+
+// //   const billing =
+// //     order.billing || {};
+
+// //   const shipping =
+// //     order.shipping ||
+// //     billing;
+
+// //   const address =
+// //     isInvoice
+// //       ? billing
+// //       : shipping;
+
+// //   const startY = doc.y;
+
+// //   const lines =
+// //     addressLines(address);
+
+// //   doc
+// //     .font('Helvetica')
+// //     .fontSize(9.5)
+// //     .fillColor('#111111');
+
+// //   let addressY =
+// //     startY;
+
+// //   for (const line of lines) {
+// //     doc.text(
+// //       String(line),
+// //       44,
+// //       addressY,
+// //       {
+// //         width: 240,
+// //       }
+// //     );
+
+// //     addressY += 16;
+// //   }
+
+// //   const metaX = 320;
+
+// //   let metaY =
+// //     startY;
+
+// //   if (
+// //     isInvoice &&
+// //     order.institution_name
+// //   ) {
+// //     doc
+// //       .font('Helvetica-Bold')
+// //       .fontSize(9.5)
+// //       .text(
+// //         String(
+// //           order.institution_name
+// //         ).toUpperCase(),
+// //         metaX,
+// //         metaY,
+// //         {
+// //           width: 230,
+// //         }
+// //       );
+
+// //     metaY += 19;
+// //   }
+
+// //   const metaRows =
+// //     isInvoice
+// //       ? [
+// //           [
+// //             'Invoice Number',
+// //             order.invoice_number ||
+// //               '—',
+// //           ],
+// //           [
+// //             'Invoice Date',
+// //             pdfDate(
+// //               order.invoice_date
+// //             ),
+// //           ],
+// //           [
+// //             'Order Number',
+// //             order.id,
+// //           ],
+// //           [
+// //             'Order Date',
+// //             pdfDate(
+// //               order.date_created_gmt
+// //             ),
+// //           ],
+// //           [
+// //             'Payment Method',
+// //             order.payment_method_title ||
+// //               order.payment_method ||
+// //               '—',
+// //           ],
+// //         ]
+// //       : [
+// //           [
+// //             'Order Number',
+// //             order.id,
+// //           ],
+// //           [
+// //             'Order Date',
+// //             pdfDate(
+// //               order.date_created_gmt
+// //             ),
+// //           ],
+// //           [
+// //             'Shipping Method',
+// //             order.shipping_label ||
+// //               'Flat rate',
+// //           ],
+// //         ];
+
+// //   for (
+// //     const [label, value]
+// //     of metaRows
+// //   ) {
+// //     doc
+// //       .font('Helvetica-Bold')
+// //       .fontSize(9)
+// //       .text(
+// //         `${label}:`,
+// //         metaX,
+// //         metaY,
+// //         {
+// //           width: 95,
+// //           continued: true,
+// //         }
+// //       )
+// //       .font('Helvetica')
+// //       .text(
+// //         ` ${value}`,
+// //         {
+// //           width: 135,
+// //         }
+// //       );
+
+// //     metaY += 17;
+// //   }
+
+// //   doc.y =
+// //     Math.max(
+// //       addressY,
+// //       metaY
+// //     ) + 20;
+// // }
+
+// function drawItemsHeader(
+//   doc,
+//   type
+// ) {
+//   const isInvoice =
+//     type === 'invoice';
+
+//   ensurePdfSpace(
+//     doc,
+//     70
+//   );
+
+//   const y = doc.y;
+
+//   doc
+//     .rect(
+//       44,
+//       y,
+//       507,
+//       28
+//     )
+//     .fill('#000000');
+
+//   doc
+//     .fillColor('#ffffff')
+//     .font('Helvetica-Bold')
+//     .fontSize(9);
+
+//   doc.text(
+//     'Product',
+//     55,
+//     y + 9,
+//     {
+//       width:
+//         isInvoice
+//           ? 290
+//           : 390,
+//     }
+//   );
+// doc.text(
+//   'Quantity',
+//   isInvoice
+//     ? 365
+//     : 445,
+//   y + 9,
+//   {
+//     width: 60,
+//     align: 'right',
+//   }
+// );
+
+// if (isInvoice) {
+//   doc.text(
+//     'Price',
+//     455,
+//     y + 9,
+//     {
+//       width: 85,
+//       align: 'right',
+//     }
+//   );
+// }
+//   // doc.text(
+//   //   'Quantity',
+//   //   isInvoice
+//   //     ? 350
+//   //     : 445,
+//   //   y + 9,
+//   //   {
+//   //     width: 70,
+//   //     align: 'right',
+//   //   }
+//   // );
+
+//   // if (isInvoice) {
+//   //   doc.text(
+//   //     'Price',
+//   //     445,
+//   //     y + 9,
+//   //     {
+//   //       width: 95,
+//   //       align: 'right',
+//   //     }
+//   //   );
+//   // }
+
+//   doc
+//     .fillColor('#111111');
+
+//   doc.y =
+//     y + 35;
+// }
+
+// function drawOrderItems(
+//   doc,
+//   order,
+//   type
+// ) {
+//   const isInvoice =
+//     type === 'invoice';
+
+//   drawItemsHeader(
+//     doc,
+//     type
+//   );
+
+//   const items =
+//     order.line_items || [];
+
+//   for (const item of items) {
+//     ensurePdfSpace(
+//       doc,
+//       65
+//     );
+
+
+//     if (
+//       doc.y <
+//       doc.page.margins.top +
+//         20
+//     ) {
+//       drawItemsHeader(
+//         doc,
+//         type
+//       );
+//     }
+
+//     const qty =
+//       Number(item.qty) || 0;
+
+//     const total =
+//       Number(
+//         item.line_total
+//       ) || 0;
+
+//     const unit =
+//       qty > 0
+//         ? total / qty
+//         : total;
+
+//     const rowY =
+//       doc.y;
+
+//     doc
+//       .font('Helvetica-Bold')
+//       .fontSize(9)
+//       .fillColor('#111111')
+//       .text(
+//         item.order_item_name ||
+//           'Product',
+//         55,
+//         rowY,
+//         {
+//           width:
+//             isInvoice
+//               ? 280
+//               : 370,
+//         }
+//       );
+
+//     let detailY =
+//       doc.y + 2;
+
+//     if (item.size) {
+//       doc
+//         .font('Helvetica')
+//         .fontSize(8)
+//         .fillColor('#444444')
+//         .text(
+//           `Size: ${item.size}`,
+//           55,
+//           detailY,
+//           {
+//             width: 280,
+//           }
+//         );
+
+//       detailY =
+//         doc.y + 2;
+//     }
+
+//     const detailParts = [];
+
+//     if (item.sku) {
+//       detailParts.push(
+//         `SKU: ${item.sku}`
+//       );
+//     }
+
+//     if (item.hsn) {
+//       detailParts.push(
+//         `HSN: ${item.hsn}`
+//       );
+//     }
+
+//     if (
+//       detailParts.length
+//     ) {
+//       doc
+//         .font('Helvetica')
+//         .fontSize(8)
+//         .fillColor('#444444')
+//         .text(
+//           detailParts.join(
+//             ' | '
+//           ),
+//           55,
+//           detailY,
+//           {
+//             width: 280,
+//           }
+//         );
+//     }
+
+//     doc
+//       .font('Helvetica')
+//       .fontSize(9)
+//       .fillColor('#111111')
+//       .text(
+//         String(qty),
+//         isInvoice
+//           ? 350
+//           : 445,
+//         rowY,
+//         {
+//           width: 60,
+//           align: 'right',
+//         }
+//       );
+
+//     // if (isInvoice) {
+//     //   doc.text(
+//     //     moneyText(unit),
+//     //     445,
+//     //     rowY,
+//     //     {
+//     //       width: 95,
+//     //       align: 'right',
+//     //     }
+//     //   );
+//     // }
+//     if (isInvoice) {
+//   doc.text(
+//     moneyText(unit),
+//     455,
+//     rowY,
+//     {
+//       width: 85,
+//       align: 'right',
+//     }
+//   );
+// }
+
+//     const rowBottom =
+//       Math.max(
+//         doc.y,
+//         detailY + 20,
+//         rowY + 28
+//       );
+
+//     doc
+//       .moveTo(
+//         44,
+//         rowBottom
+//       )
+//       .lineTo(
+//         551,
+//         rowBottom
+//       )
+//       .strokeColor(
+//         '#d9d9d9'
+//       )
+//       .stroke();
+
+//     doc
+//       .strokeColor(
+//         '#000000'
+//       );
+
+//     doc.y =
+//       rowBottom + 10;
+//   }
+// }
+
+// function drawInvoiceTotals(
+//   doc,
+//   order
+// ) {
+//   ensurePdfSpace(
+//     doc,
+//     150
+//   );
+
+//   doc.moveDown(1);
+
+//   const x = 330;
+
+//   const valueX = 445;
+
+//   let y = doc.y;
+
+//   const row = (
+//     label,
+//     value,
+//     bold = false
+//   ) => {
+//     doc
+//       .font(
+//         bold
+//           ? 'Helvetica-Bold'
+//           : 'Helvetica'
+//       )
+//       .fontSize(
+//         bold
+//           ? 10.5
+//           : 9
+//       )
+//       .fillColor(
+//         '#111111'
+//       )
+//       .text(
+//         label,
+//         x,
+//         y,
+//         {
+//           width: 105,
+//         }
+//       );
+
+//     doc.text(
+//       value,
+//       valueX,
+//       y,
+//       {
+//         width: 95,
+//         align: 'right',
+//       }
+//     );
+
+//     y +=
+//       bold
+//         ? 24
+//         : 19;
+//   };
+
+//   row(
+//     'Subtotal',
+//     moneyText(
+//       order.subtotal
+//     )
+//   );
+
+//   row(
+//     'Shipping',
+//     `${moneyText(
+//       order.shipping_cost
+//     )}`
+//   );
+
+//   doc
+//     .moveTo(
+//       x,
+//       y
+//     )
+//     .lineTo(
+//       540,
+//       y
+//     )
+//     .stroke();
+
+//   y += 9;
+
+//   row(
+//     'Total',
+//     moneyText(
+//       order.total_amount
+//     ),
+//     true
+//   );
+
+//   const taxParts =
+//     (order.taxes || [])
+//       .filter(
+//         (tax) =>
+//           Number(tax.amount) >
+//           0
+//       )
+//       .map((tax) => {
+//         const rate =
+//           tax.rate
+//             ? `${tax.rate}% `
+//             : '';
+
+//         const label =
+//           String(
+//             tax.label || ''
+//           ).replace(
+//             /^IN-\d+(?:\.\d+)?%\s*/i,
+//             ''
+//           );
+
+//         return `${moneyText(
+//           tax.amount
+//         )} ${rate}${label}`;
+//       });
+
+//   if (taxParts.length) {
+//     doc
+//       .font('Helvetica')
+//       .fontSize(7.5)
+//       .fillColor('#444444')
+//       .text(
+//         `(includes ${taxParts.join(
+//           ', '
+//         )})`,
+//         x,
+//         y,
+//         {
+//           width: 210,
+//           align: 'right',
+//         }
+//       );
+
+//     y =
+//       doc.y + 8;
+//   }
+
+//   doc.y =
+//     y;
+// }
+
+// function drawPdfFooter(
+//   doc
+// ) {
+//   ensurePdfSpace(
+//     doc,
+//     70
+//   );
+
+//   doc.moveDown(2);
+
+//   const y =
+//     doc.y;
+
+//   doc
+//     .moveTo(
+//       44,
+//       y
+//     )
+//     .lineTo(
+//       551,
+//       y
+//     )
+//     .strokeColor(
+//       '#bbbbbb'
+//     )
+//     .stroke();
+
+//   doc
+//     .font('Helvetica')
+//     .fontSize(8.5)
+//     .fillColor('#333333')
+//     .text(
+//       SHOP.footer,
+//       44,
+//       y + 15,
+//       {
+//         width: 507,
+//         align: 'center',
+//       }
+//     );
+
+//   doc
+//     .strokeColor(
+//       '#000000'
+//     )
+//     .fillColor(
+//       '#111111'
+//     );
+
+//   doc.y =
+//     y + 45;
+// }
+
+// async function addOrderToPdf(
+//   doc,
+//   rawOrder,
+//   type
+// ) {
+//   await loadShopSettings();
+
+//   const order =
+//     await enrichOrder(
+//       rawOrder
+//     );
+
+//   drawPdfHeader(
+//     doc,
+//     order,
+//     type
+//   );
+
+//   drawAddressAndMeta(
+//     doc,
+//     order,
+//     type
+//   );
+
+//   drawOrderItems(
+//     doc,
+//     order,
+//     type
+//   );
+
+//   if (
+//     type === 'invoice'
+//   ) {
+//     drawInvoiceTotals(
+//       doc,
+//       order
+//     );
+//   }
+
+//   drawPdfFooter(
+//     doc
+//   );
+
+//   return order;
+// }
+
+// async function createOrderPdfBuffer(
+//   rawOrder,
+//   type
+// ) {
+//   const doc =
+//     createPdfDocument();
+
+//   const promise =
+//     collectPdfBuffer(
+//       doc
+//     );
+
+//   const order =
+//     await addOrderToPdf(
+//       doc,
+//       rawOrder,
+//       type
+//     );
+
+//   doc.end();
+
+//   const pdf =
+//     await promise;
+
+//   return {
+//     pdf,
+//     order,
+//   };
+// }
+
+// async function createCombinedPdfBuffer(
+//   orderIds,
+//   type
+// ) {
+//   const doc =
+//     createPdfDocument();
+
+//   const promise =
+//     collectPdfBuffer(
+//       doc
+//     );
+
+//   for (
+//     let i = 0;
+//     i < orderIds.length;
+//     i++
+//   ) {
+//     if (i > 0) {
+//       doc.addPage();
+//     }
+
+//     const order =
+//       await orderService.getById(
+//         orderIds[i]
+//       );
+
+//     await addOrderToPdf(
+//       doc,
+//       order,
+//       type
+//     );
+//   }
+
+//   doc.end();
+
+//   return promise;
 // }
 
 // function buildListQuery(req) {
@@ -3784,14 +4869,50 @@ module.exports = {
 // //   return rows.map((r) => r.id);
 // // }
 
-// async function buildPdfForOrder(orderId, type) {
-//   const order = await orderService.getById(orderId);
-//   const html = await buildDocumentHtml(order, type);
-//   const pdf = toBuffer(await htmlToPdfBuffer(html));
-//   const enriched = await enrichOrder(order);
-//   const num = type === 'invoice' ? enriched.invoice_number : enriched.packing_slip_number;
-//   const filename = `${type === 'invoice' ? 'invoice' : 'packing-slip'}-${num}.pdf`;
-//   return { pdf, filename, order: enriched };
+// // async function buildPdfForOrder(orderId, type) {
+// //   const order = await orderService.getById(orderId);
+// //   const html = await buildDocumentHtml(order, type);
+// //   const pdf = toBuffer(await htmlToPdfBuffer(html));
+// //   const enriched = await enrichOrder(order);
+// //   const num = type === 'invoice' ? enriched.invoice_number : enriched.packing_slip_number;
+// //   const filename = `${type === 'invoice' ? 'invoice' : 'packing-slip'}-${num}.pdf`;
+// //   return { pdf, filename, order: enriched };
+// // }
+// async function buildPdfForOrder(
+//   orderId,
+//   type
+// ) {
+//   const rawOrder =
+//     await orderService.getById(
+//       orderId
+//     );
+
+//   const {
+//     pdf,
+//     order,
+//   } =
+//     await createOrderPdfBuffer(
+//       rawOrder,
+//       type
+//     );
+
+//   const num =
+//     type === 'invoice'
+//       ? order.invoice_number
+//       : order.packing_slip_number;
+
+//   const filename =
+//     `${
+//       type === 'invoice'
+//         ? 'invoice'
+//         : 'packing-slip'
+//     }-${num}.pdf`;
+
+//   return {
+//     pdf,
+//     filename,
+//     order,
+//   };
 // }
 
 // // async function buildDownload(orderIds, type) {
@@ -3838,16 +4959,22 @@ module.exports = {
 //   }
 
 //   // Multiple orders -> ONE combined PDF
-//   const html =
-//     await buildCombinedDocumentHtml(
-//       orderIds,
-//       type
-//     );
+//   // const html =
+//   //   await buildCombinedDocumentHtml(
+//   //     orderIds,
+//   //     type
+//   //   );
 
-//   const pdf =
-//     toBuffer(
-//       await htmlToPdfBuffer(html)
-//     );
+//   // const pdf =
+//   //   toBuffer(
+//   //     await htmlToPdfBuffer(html)
+//   //   );
+//   // Multiple orders -> ONE combined PDF
+// const pdf =
+//   await createCombinedPdfBuffer(
+//     orderIds,
+//     type
+//   );
 
 //   const label =
 //     type === 'invoice'
@@ -4194,38 +5321,46 @@ module.exports = {
 //    * PDF 1 - ALL INVOICES
 //    * =====================================
 //    */
+//     const invoicesPdf =
+//   await createCombinedPdfBuffer(
+//     orderIds,
+//     'invoice'
+//   );
+//   // const invoicesHtml =
+//   //   await buildCombinedDocumentHtml(
+//   //     orderIds,
+//   //     'invoice'
+//   //   );
 
-//   const invoicesHtml =
-//     await buildCombinedDocumentHtml(
-//       orderIds,
-//       'invoice'
-//     );
-
-//   const invoicesPdf =
-//     toBuffer(
-//       await htmlToPdfBuffer(
-//         invoicesHtml
-//       )
-//     );
+//   // const invoicesPdf =
+//   //   toBuffer(
+//   //     await htmlToPdfBuffer(
+//   //       invoicesHtml
+//   //     )
+//   //   );
 
 //   /*
 //    * =====================================
 //    * PDF 2 - ALL PACKING SLIPS
 //    * =====================================
 //    */
+//     const packingSlipsPdf =
+//   await createCombinedPdfBuffer(
+//     orderIds,
+//     'packing-slip'
+//   );
+//   // const packingSlipsHtml =
+//   //   await buildCombinedDocumentHtml(
+//   //     orderIds,
+//   //     'packing-slip'
+//   //   );
 
-//   const packingSlipsHtml =
-//     await buildCombinedDocumentHtml(
-//       orderIds,
-//       'packing-slip'
-//     );
-
-//   const packingSlipsPdf =
-//     toBuffer(
-//       await htmlToPdfBuffer(
-//         packingSlipsHtml
-//       )
-//     );
+//   // const packingSlipsPdf =
+//   //   toBuffer(
+//   //     await htmlToPdfBuffer(
+//   //       packingSlipsHtml
+//   //     )
+//   //   );
 
 //   /*
 //    * Safe filename
@@ -4436,6 +5571,9 @@ module.exports = {
 //   sendDailyAdminReports,
 //   resolveOrderIds,
 // };
+
+
+
 
 
 
