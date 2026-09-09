@@ -150,6 +150,80 @@ function resolveInventoryPeriod(query = {}) {
       const end = new Date(start.getTime() + 24 * 60 * 60 * 1000 - 1);
       return build(start, end, formatKolkataDate(start), { date: single });
     }
+    case 'range': {
+  const from = query.date_from || query.from;
+  const to = query.date_to || query.to;
+
+  if (!from || !to) {
+    return {
+      period,
+      label: 'Select date range',
+      timezone: TIMEZONE,
+      start: null,
+      end: null,
+      date_from: from || null,
+      date_to: to || null,
+    };
+  }
+
+  const [fy, fm, fd] = String(from).split('-').map(Number);
+  const [ty, tm, td] = String(to).split('-').map(Number);
+
+  if (
+    !fy ||
+    !fm ||
+    !fd ||
+    !ty ||
+    !tm ||
+    !td
+  ) {
+    return {
+      period,
+      label: 'Invalid date range',
+      timezone: TIMEZONE,
+      start: null,
+      end: null,
+      date_from: from,
+      date_to: to,
+    };
+  }
+
+  const start = kolkataMidnightUtc(
+    fy,
+    fm - 1,
+    fd
+  );
+
+  const end = new Date(
+    kolkataMidnightUtc(
+      ty,
+      tm - 1,
+      td + 1
+    ).getTime() - 1
+  );
+
+  if (start.getTime() > end.getTime()) {
+    return {
+      period,
+      label: 'Invalid date range',
+      timezone: TIMEZONE,
+      start: null,
+      end: null,
+      date_from: from,
+      date_to: to,
+    };
+  }
+
+  return build(
+    start,
+    end,
+    `${from} to ${to}`,
+    {
+      date_from: from,
+      date_to: to,
+    }
+  );
+}
     case 'week': {
       const ref = new Date(Date.UTC(today.year, today.month, today.day));
       const dow = ref.getUTCDay();

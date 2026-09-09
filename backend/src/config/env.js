@@ -7,8 +7,8 @@ module.exports = {
   customerFrontendUrl:
     process.env.CUSTOMER_FRONTEND_URL ||
     process.env.VITE_CUSTOMER_URL ||
-    // 'http://localhost:5174',
-     'https://global-edge-mvn.easybizcart.com',
+    'http://localhost:5174',
+    //  'https://global-edge-mvn.easybizcart.com',
   apiPublicUrl:
     process.env.API_PUBLIC_URL ||
     process.env.BACKEND_PUBLIC_URL ||
