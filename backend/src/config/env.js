@@ -3,12 +3,12 @@ require('dotenv').config();
 module.exports = {
   port: parseInt(process.env.PORT || '4000', 10),
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
-  // frontendUrl: process.env.FRONTEND_URL || 'https://global-edge-mvn-admin.easybizcart.com',
+  // frontendUrl: process.env.FRONTEND_URL || 'https://globaledge-mvn-admin.brassleaf.store',
   customerFrontendUrl:
     process.env.CUSTOMER_FRONTEND_URL ||
     process.env.VITE_CUSTOMER_URL ||
     'http://localhost:5174',
-    //  'https://global-edge-mvn.easybizcart.com',
+    //  'https://global-edge-mvn.brassleaf.store',
   apiPublicUrl:
     process.env.API_PUBLIC_URL ||
     process.env.BACKEND_PUBLIC_URL ||
