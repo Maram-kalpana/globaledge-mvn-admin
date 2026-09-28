@@ -5,6 +5,7 @@ const { nowGmt } = require('../utils/datetime');
 const { withTransaction } = require('../utils/transaction');
 const { httpError } = require('../utils/httpError');
 const orderService = require('./orderService');
+const { ensureInvoiceNumber } = require('./invoiceService');
 
 const SORT = {
   date: 'p.date_added',
@@ -343,38 +344,33 @@ async function statsSummary(req) {
 
 async function list(req) {
   const { page, limit, offset, sortCol, dir, search } = parseList(req, SORT, 'date');
-  const status = req.query.status;
+  const status = req.query.status; // '0' | '1' | undefined
   const params = [];
-const {
-  dateFrom,
-  dateTo,
-} = getDateRangeFilters(req);
-/*
- * Admin Payments page:
- * show only successful Paytm payments.
- *
- * p.status:
- * 0 = pending/failed
- * 1 = success
- */
-let where = `
-  p.status = '1'
-  AND o.status IN (
-    'wc-processing',
-    'wc-completed'
-  )
-`;
-if (dateFrom && dateTo) {
-  where += `
-    AND p.date_added >= ?
-    AND p.date_added < DATE_ADD(?, INTERVAL 1 DAY)
-  `;
+  const {
+    dateFrom,
+    dateTo,
+  } = getDateRangeFilters(req);
 
-  params.push(
-    `${dateFrom} 00:00:00`,
-    dateTo
-  );
-}
+  /*
+   * Admin Payments page:
+   * show ALL Paytm payments (successful, pending, failed) by default.
+   * Optional ?status=0|1 lets the UI filter down to one bucket later.
+   */
+  let where = `1 = 1`;
+
+  if (status === '0' || status === '1') {
+    where += ` AND p.status = ?`;
+    params.push(status);
+  }
+
+  if (dateFrom && dateTo) {
+    where += `
+      AND p.date_added >= ?
+      AND p.date_added < DATE_ADD(?, INTERVAL 1 DAY)
+    `;
+    params.push(`${dateFrom} 00:00:00`, dateTo);
+  }
+
   if (search) {
     where += ` AND (
       p.paytm_order_id LIKE ? OR p.transaction_id LIKE ? OR o.billing_email LIKE ?
@@ -523,15 +519,19 @@ async function reconcile(orderId, body = {}) {
           `UPDATE ${P}wc_order_stats SET status = ? WHERE order_id = ?`,
           [nextStatus, targetOrderId]
         );
+
+        // Order just moved into a paid/fulfillable state — make sure an invoice number exists,
+        // same as WordPress/PDF Invoices plugin would generate on this status transition.
+        if (['processing', 'completed'].includes(nextStatus)) {
+          await ensureInvoiceNumber(targetOrderId, conn);
+        }
       }
     }
   });
 
   return getById(targetOrderId);
 }
-
 module.exports = { list, getById, getByOrderId, statsSummary, reconcile, parsePaytmResponse };
-
 
 
 // const pool = require('../config/db');
@@ -654,29 +654,102 @@ module.exports = { list, getById, getByOrderId, statsSummary, reconcile, parsePa
 //   };
 // }
 
-// async function statsSummary() {
-//   const [[summary]] = await pool.query(
-//     `SELECT
-//        COUNT(*) AS total_transactions,
-//        SUM(CASE WHEN p.status = '1' THEN 1 ELSE 0 END) AS successful,
-//        SUM(CASE WHEN p.status = '0' THEN 1 ELSE 0 END) AS failed_or_pending,
-//        ROUND(SUM(CASE WHEN p.status = '1' THEN o.total_amount ELSE 0 END), 2) AS total_collected
-//      FROM ${P}paytm_order_data p
-//      JOIN ${P}wc_orders o ON o.id = p.order_id`
-//   );
+// // async function statsSummary() {
+// //   const [[summary]] = await pool.query(
+// //     `SELECT
+// //        COUNT(*) AS total_transactions,
+// //        SUM(CASE WHEN p.status = '1' THEN 1 ELSE 0 END) AS successful,
+// //        SUM(CASE WHEN p.status = '0' THEN 1 ELSE 0 END) AS failed_or_pending,
+// //        ROUND(SUM(CASE WHEN p.status = '1' THEN o.total_amount ELSE 0 END), 2) AS total_collected
+// //      FROM ${P}paytm_order_data p
+// //      JOIN ${P}wc_orders o ON o.id = p.order_id`
+// //   );
 
-//   const [byMonth] = await pool.query(
-//     `SELECT
-//        DATE_FORMAT(p.date_added, '%Y-%m') AS month,
-//        COUNT(*) AS transactions,
-//        ROUND(SUM(o.total_amount), 2) AS revenue
-//      FROM ${P}paytm_order_data p
-//      JOIN ${P}wc_orders o ON o.id = p.order_id
-//      WHERE p.status = '1'
-//      GROUP BY month
-//      ORDER BY month DESC
-//      LIMIT 12`
-//   );
+// //   const [byMonth] = await pool.query(
+// //     `SELECT
+// //        DATE_FORMAT(p.date_added, '%Y-%m') AS month,
+// //        COUNT(*) AS transactions,
+// //        ROUND(SUM(o.total_amount), 2) AS revenue
+// //      FROM ${P}paytm_order_data p
+// //      JOIN ${P}wc_orders o ON o.id = p.order_id
+// //      WHERE p.status = '1'
+// //      GROUP BY month
+// //      ORDER BY month DESC
+// //      LIMIT 12`
+// //   );
+
+// //   return {
+// //     ...summary,
+// //     summary,
+// //     byMonth,
+// //   };
+// // }
+// async function statsSummary() {
+//   const [[summary]] =
+//     await pool.query(
+//       `
+//       SELECT
+//         COUNT(*) AS total_transactions,
+
+//         COUNT(*) AS successful,
+
+//         0 AS failed_or_pending,
+
+//         ROUND(
+//           COALESCE(
+//             SUM(o.total_amount),
+//             0
+//           ),
+//           2
+//         ) AS total_collected
+
+//       FROM ${P}paytm_order_data p
+
+//       JOIN ${P}wc_orders o
+//         ON o.id = p.order_id
+
+//       WHERE
+//         p.status = '1'
+//         AND o.status IN (
+//           'wc-processing',
+//           'wc-completed'
+//         )
+//       `
+//     );
+
+//   const [byMonth] =
+//     await pool.query(
+//       `
+//       SELECT
+//         DATE_FORMAT(
+//           p.date_added,
+//           '%Y-%m'
+//         ) AS month,
+
+//         COUNT(*) AS transactions,
+
+//         ROUND(
+//           SUM(o.total_amount),
+//           2
+//         ) AS revenue
+
+//       FROM ${P}paytm_order_data p
+
+//       JOIN ${P}wc_orders o
+//         ON o.id = p.order_id
+
+//       WHERE
+//         p.status = '1'
+//         AND o.status IN (
+//           'wc-processing',
+//           'wc-completed'
+//         )
+
+//       GROUP BY month
+//       ORDER BY month DESC
+//       LIMIT 12
+//       `
+//     );
 
 //   return {
 //     ...summary,
@@ -688,13 +761,30 @@ module.exports = { list, getById, getByOrderId, statsSummary, reconcile, parsePa
 // async function list(req) {
 //   const { page, limit, offset, sortCol, dir, search } = parseList(req, SORT, 'date');
 //   const status = req.query.status;
-//   const params = [];
-//   let where = '1=1';
+//   // const params = [];
+//   // let where = '1=1';
 
-//   if (status === '0' || status === '1') {
-//     where += ` AND p.status = ?`;
-//     params.push(status);
-//   }
+//   // if (status === '0' || status === '1') {
+//   //   where += ` AND p.status = ?`;
+//   //   params.push(status);
+//   // }
+//   const params = [];
+
+// /*
+//  * Admin Payments page:
+//  * show only successful Paytm payments.
+//  *
+//  * p.status:
+//  * 0 = pending/failed
+//  * 1 = success
+//  */
+// let where = `
+//   p.status = '1'
+//   AND o.status IN (
+//     'wc-processing',
+//     'wc-completed'
+//   )
+// `;
 //   if (search) {
 //     where += ` AND (
 //       p.paytm_order_id LIKE ? OR p.transaction_id LIKE ? OR o.billing_email LIKE ?
